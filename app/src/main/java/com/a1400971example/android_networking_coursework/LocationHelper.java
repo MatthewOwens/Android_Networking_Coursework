@@ -44,7 +44,7 @@ public class LocationHelper extends Service implements LocationListener {
 
     public LocationHelper(Context context) {
         this.context = context;
-        checkPermission((Activity)context);
+        checkPermission((Activity)context);     // TODO: Fix this quick hack
         getLocation();
     }
 
@@ -129,6 +129,7 @@ public class LocationHelper extends Service implements LocationListener {
     //@Override
     public void onRequestPermissionResult(int requestCode, String permissions[], int grantResults[])
     {
+        Log.i(TAG, "permission request result");
         if(requestCode == FINE_ACCESS_REQUEST)
         {
             // Checking to see if the request was cancelled / denied
