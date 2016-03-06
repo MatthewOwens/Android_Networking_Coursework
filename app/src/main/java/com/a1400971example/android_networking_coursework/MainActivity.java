@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.util.Random;
 
@@ -116,6 +117,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if(view == buttons[1])
         {
             Log.i(TAG, "Trade button pressed!");
+            LocationHelper locHelper = new LocationHelper(MainActivity.this);
+            Toast.makeText( getApplicationContext(),
+                            "Lat: " + locHelper.getLatitude() + "\nLong: " + locHelper.getLongtitude(),
+                            Toast.LENGTH_LONG).show();
             //Intent intent = new Intent(getApplicationContext(), TradeActivity.class);
             //startActivity(intent);
         }

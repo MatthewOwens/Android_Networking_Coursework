@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,6 +42,9 @@ public class ListActivity extends Activity implements View.OnClickListener
 
         setContentView(R.layout.list_layout);
         dbHelper = new DatabaseHelper(this);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Setting up the toggleButton
         toggleButton = (Button)findViewById(R.id.toggleButton);
