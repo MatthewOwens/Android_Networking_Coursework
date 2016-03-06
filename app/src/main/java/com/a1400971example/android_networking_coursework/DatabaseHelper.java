@@ -7,13 +7,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 /**
  * Created by Matthew Owens on 06/03/16.
  */
 public class DatabaseHelper extends SQLiteOpenHelper{
 
     private static final int DATABASE_VERSION = 1;
-    private static final String TAG = "DBHelper";
+    private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "RomonDB";
     private static final String DEX_TABLE_NAME = "Dex";
     private static final String BANK_TABLE_NAME = "Bank";
@@ -22,31 +24,33 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE =  "CREATE TABLE " + DEX_TABLE_NAME + " (" +
-                                                    DEX_COLUMN_NAMES[0] + "TEXT, " +
-                                                    DEX_COLUMN_NAMES[1] + "TEXT, " +
-                                                    DEX_COLUMN_NAMES[2] + "INTEGER, " + // Using INTEGER since BIT is unsupported
-                                                    DEX_COLUMN_NAMES[3] + "INTEGER);";
+                                                    DEX_COLUMN_NAMES[0] + " TEXT, " +
+                                                    DEX_COLUMN_NAMES[1] + " TEXT, " +
+                                                    DEX_COLUMN_NAMES[2] + " INTEGER, " + // Using INTEGER since BIT is unsupported
+                                                    DEX_COLUMN_NAMES[3] + " INTEGER);";
 
     // Bank table's CREATE string
-    private static final String BANK_TABLE_CREATE = "CRATE TABLE " + BANK_TABLE_NAME + " (" +
-                                                    BANK_COLUMN_NAMES[0] + "TEXT," +
-                                                    BANK_COLUMN_NAMES[1] + "TEXT," +
-                                                    BANK_COLUMN_NAMES[2] + "TEXT);";
+    private static final String BANK_TABLE_CREATE = "CREATE TABLE " + BANK_TABLE_NAME + " (" +
+                                                    BANK_COLUMN_NAMES[0] + " TEXT, " +
+                                                    BANK_COLUMN_NAMES[1] + " TEXT, " +
+                                                    BANK_COLUMN_NAMES[2] + " TEXT);";
 
     DatabaseHelper(Context context)
     {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
     }
     @Override
     public void onCreate(SQLiteDatabase db)
     {
+        Log.i(TAG, "onCreate");
         // Creates the database if it doesn't exist and adds the DEX and STORED tables
         db.execSQL(DEX_TABLE_CREATE);
         db.execSQL(BANK_TABLE_CREATE);
 
         // DEX table initial values, nonsense for testing
         for(int i = 0; i < 5; ++i)
-            addRomonDex("testRomon" + i, "romon" + i);
+            addRomonDex("testRomon" + i, "romon" + i, db);
     }
 
     @Override
@@ -54,9 +58,9 @@ public class DatabaseHelper extends SQLiteOpenHelper{
     {
     }
 
-    private void addRomonDex(String name, String imgPath)
+    //private void addRomonDex(String name, String imgPath)
+    private void addRomonDex(String name, String imgPath, SQLiteDatabase db)
     {
-        SQLiteDatabase db = this.getWritableDatabase();
         ContentValues row = new ContentValues();
 
         row.put(DEX_COLUMN_NAMES[0], name);
@@ -65,7 +69,8 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         row.put(DEX_COLUMN_NAMES[3], 0);
 
         db.insert(DEX_TABLE_NAME, null, row);
-        db.close();
+        //db.close();
+        Log.i(TAG, "addRomonDex completed");
     }
 
     public void addRomonBank(int DexPosition, String nickname)
@@ -94,13 +99,107 @@ public class DatabaseHelper extends SQLiteOpenHelper{
             db.insert(BANK_TABLE_NAME, null, row);
         }
 
-        db.close();
+        result.close();
+        //db.close();
     }
 
     public void delRomonBank(int position)
     {
         SQLiteDatabase db = this.getReadableDatabase();
         db.delete(BANK_TABLE_NAME, "id=" + position, null);
-        db.close();
+        //db.close();
+    }
+
+    public int getDexCount()
+    {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, null, null, null, null, null);
+
+        if(result == null)
+        {
+            Log.i(TAG, "getDexCount: invalid result!");
+            result.close();
+            //db.close();
+            return -1;
+        }
+        else
+        {
+            result.close();
+            //db.close();
+            return result.getCount();
+        }
+
+    }
+
+    public int getBankCount()
+    {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor result = db.query(BANK_TABLE_NAME, BANK_COLUMN_NAMES, null, null, null, null, null);
+
+        if(result == null)
+        {
+            Log.i(TAG, "getBankCount: invalid result!");
+            result.close();
+            //db.close();
+            return -1;
+        }
+        else
+        {
+            result.close();
+            //db.close();
+            return result.getCount();
+        }
+    }
+
+    public ArrayList<Romon> getDexRomon()
+    {
+        ArrayList<Romon> romons = new ArrayList<Romon>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, null, null, null, null, null);
+
+        if(result == null)
+            Log.i(TAG, "getDexRomon: invalid result!");
+        else
+        {
+            int romonCount = result.getCount();
+            Log.i(TAG, "result count: " + romonCount);
+            result.moveToFirst();
+
+            for(int i = 0; i < romonCount; ++i)
+            {
+                romons.add(new Romon(result.getString(0), result.getString(0), result.getString(1)));
+                result.moveToNext();
+            }
+        }
+        result.close();
+        //db.close();
+        return romons;
+    }
+
+    public ArrayList<Romon> getBankRomon()
+    {
+        ArrayList<Romon> romons = new ArrayList<Romon>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor result = db.query(BANK_TABLE_NAME, BANK_COLUMN_NAMES, null, null, null, null, null);
+
+        if(result == null)
+            Log.i(TAG, "getBankRomon: invalid result!");
+        else
+        {
+            int romonCount = result.getCount();
+            Log.i(TAG, "result count: " + romonCount);
+            result.moveToFirst();
+
+            for(int i = 0; i < romonCount; ++i)
+            {
+                romons.add(new Romon(result.getString(0), result.getString(1), result.getString(2)));
+                result.moveToNext();
+            }
+        }
+        result.close();
+        //db.close();
+        return romons;
     }
 }
