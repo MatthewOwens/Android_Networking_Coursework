@@ -1,11 +1,15 @@
 package com.a1400971example.android_networking_coursework;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,8 +26,6 @@ public class ListActivity extends Activity implements View.OnClickListener
     Button toggleButton;
     boolean viewingDex = true;
     DatabaseHelper dbHelper;
-    LinearLayout namesLayout;
-    LinearLayout iconsLayout;
 
     ArrayList<Romon> dexRomon;
     ArrayList<Romon> bankRomon;
@@ -34,7 +36,8 @@ public class ListActivity extends Activity implements View.OnClickListener
     ArrayList<TextView> bankNames= new ArrayList<TextView>();
     ArrayList<ImageView> bankIcons = new ArrayList<ImageView>();
 
-    @Override
+    GridLayout gridLayout;
+
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -46,29 +49,38 @@ public class ListActivity extends Activity implements View.OnClickListener
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        gridLayout = (GridLayout)findViewById(R.id.gridLayout);
+        gridLayout.setColumnCount(2);
+
         // Setting up the toggleButton
         toggleButton = (Button)findViewById(R.id.toggleButton);
         toggleButton.setText("View Banked Romon");
         toggleButton.setOnClickListener(this);
 
-        namesLayout = (LinearLayout)findViewById(R.id.iconsLayout);
-        iconsLayout = (LinearLayout)findViewById(R.id.namesLayout);
-
         // Populating our romon lists
         dexRomon = dbHelper.getDexRomon();
         bankRomon = dbHelper.getBankRomon();
 
-        // Setting up the textviews
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        layoutParams.setGravity(Gravity.RIGHT);
+
+        // Setting up the dex view
         for(int i = 0; i < dexRomon.size(); ++i)
         {
             dexNames.add(i, new TextView(this));
             dexNames.get(i).setText(dexRomon.get(i).getName());
+
+            dexIcons.add(i, new ImageView(this));
+            dexIcons.get(i).setImageResource(R.drawable.unknown_romon); // TODO: Proper icons
         }
 
         for(int i = 0; i < bankRomon.size(); ++i)
         {
             bankNames.add(i, new TextView(this));
             bankNames.get(i).setText(bankRomon.get(i).getName());
+
+            bankIcons.add(i, new ImageView(this));
+            bankIcons.get(i).setImageResource(R.drawable.unknown_romon); // TODO: Proper icons
         }
 
         // Showing the dex values initially
@@ -98,23 +110,29 @@ public class ListActivity extends Activity implements View.OnClickListener
 
     private void showDex()
     {
-        // Clearing the layouts
-        namesLayout.removeAllViewsInLayout();
-        iconsLayout.removeAllViewsInLayout();
+        // Clearing the layout
+        gridLayout.removeAllViewsInLayout();
 
-        // Populating the namesLayout
+        // Populating the layouts
         for(int i = 0; i < dexRomon.size(); ++i)
-            namesLayout.addView(dexNames.get(i));
+        {
+            //namesLayout.addView(dexNames.get(i));
+            gridLayout.addView(dexNames.get(i));
+            gridLayout.addView(dexIcons.get(i));
+        }
+
     }
 
     private void showBank()
     {
         // Clearing the layouts
-        namesLayout.removeAllViewsInLayout();
-        iconsLayout.removeAllViewsInLayout();
+        gridLayout.removeAllViewsInLayout();
 
         // Populating the namesLayout
         for(int i = 0; i < bankRomon.size(); ++i)
-            namesLayout.addView(bankNames.get(i));
+        {
+            gridLayout.addView(bankNames.get(i));
+            gridLayout.addView(bankIcons.get(i));
+        }
     }
 }

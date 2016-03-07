@@ -55,4 +55,5 @@
         android:layout_above="@+id/battleButton"
         android:clickable="true"
         android:contextClickable="false" />
+
 </RelativeLayout>

@@ -11,30 +11,10 @@
         android:layout_gravity="center_horizontal"
         android:layout_weight="1.03" >
 
-        <LinearLayout
-            android:orientation="horizontal"
+        <GridLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1.03"
-                android:id="@+id/iconsLayout">
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1.03"
-                android:id="@+id/namesLayout"></LinearLayout>
-
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:id="@+id/gridLayout"></GridLayout>
     </ScrollView>
 
     <Button

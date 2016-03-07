@@ -24,8 +24,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private static long maxFindTime = 1;
 
     private Button[] buttons = new Button[3];
-    //private ImageView foundImg = new ImageView(this.getApplicationContext());
     private ImageView foundImg;
+
+    Romon foundRomon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +82,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // User hasn't opened the app before, give them a freebie
         if (prevOpened == -1) {
             Log.i(TAG, "Monster found -- initial");
-        } else {
+        }
+        else
+        {
             double timeDiff = openTime - prevOpened;
             double findChance = timeDiff / maxFindTime;
             Random r = new Random();
@@ -89,14 +92,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             // Checking if we've found a monster
             if (findChance > roll)
+            {
                 Log.i(TAG, "Monster found -- rolled");
+                foundRomon = new Romon("testRomon0", "testNick", "");
+                foundImg.setImageResource(R.drawable.unknown_romon);    // TODO: Change based on the found romon
+            }
             else
+            {
                 Log.i(TAG, "No monster found!");
-
-            // Debug
-            Log.i(TAG, "timeDiff: " + timeDiff);
-            Log.i(TAG, "findChance: " + findChance);
-            Log.i(TAG, "roll: " + roll);
+            }
         }
     }
 
@@ -125,10 +129,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
             startActivity(intent);
         }
         if (view == foundImg) {
+
+            // Test location stuff, should be in onResume
             LocationHelper locHelper = new LocationHelper(MainActivity.this);
             Toast.makeText(getApplicationContext(),
                     "Lat: " + locHelper.getLatitude() + "\nLong: " + locHelper.getLongtitude(),
                     Toast.LENGTH_LONG).show();
+
+            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+            db.addRomonBank(foundRomon);
         }
     }
 
