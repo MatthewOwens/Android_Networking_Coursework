@@ -98,8 +98,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             if (findChance > roll)
             {
                 Log.i(TAG, "Monster found -- rolled");
-                foundRomon = new Romon("testRomon0", "testNick", "");
-                foundImg.setImageResource(R.drawable.unknown_romon);    // TODO: Change based on the found romon
+
+                // TODO: Determine found romon based on latitude & longtitude
+                foundRomon = new Romon("testRomon0", "testNick", R.drawable.unknown_romon);
+                foundImg.setImageResource(foundRomon.getDrawableResource());
             }
             else
             {

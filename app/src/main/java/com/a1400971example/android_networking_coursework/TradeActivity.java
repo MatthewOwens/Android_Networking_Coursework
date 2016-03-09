@@ -68,9 +68,7 @@ public class TradeActivity extends Activity implements View.OnClickListener {
             textViews.get(i).setText(bankedRomon.get(i).getNickname());
 
             imageViews.add(i, new ImageView(this));
-
-            // TODO: Change based on the romon
-            imageViews.get(i).setImageResource(R.drawable.unknown_romon);
+            imageViews.get(i).setImageResource(bankedRomon.get(i).getDrawableResource());
 
             textViews.get(i).setOnClickListener(this);
             imageViews.get(i).setOnClickListener(this);

@@ -110,9 +110,8 @@ public class BattleActivity extends Activity implements View.OnClickListener
                 battle_romonImages[0] = (ImageView)findViewById(R.id.battle_friendlyImage);
                 battle_romonImages[1] = (ImageView)findViewById(R.id.battle_enemyImage);
 
-                // TODO: assign proper images
-                battle_romonImages[0].setImageResource(R.drawable.unknown_romon);
-                battle_romonImages[1].setImageResource(R.drawable.unknown_romon);
+                battle_romonImages[0].setImageResource(selectedRomon.getDrawableResource());
+                battle_romonImages[1].setImageResource(R.drawable.unknown_romon);   // TODO: other romon
 
                 for(int i = 0; i < 2; ++i)
                     battle_romonImages[i].setOnClickListener(this);
@@ -124,6 +123,7 @@ public class BattleActivity extends Activity implements View.OnClickListener
             // Changing to the conclusion layout
             setContentView(R.layout.battle_conclusion_layout);
             conclusion_victorImage = (ImageView)findViewById(R.id.conclusion_victorImage);
+
             // TODO: determine victor & send to other player
             conclusion_victorImage.setImageResource(R.drawable.unknown_romon);
         }

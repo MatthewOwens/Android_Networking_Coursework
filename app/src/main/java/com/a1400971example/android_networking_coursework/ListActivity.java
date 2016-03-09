@@ -71,7 +71,7 @@ public class ListActivity extends Activity implements View.OnClickListener
             dexNames.get(i).setText(dexRomon.get(i).getName());
 
             dexIcons.add(i, new ImageView(this));
-            dexIcons.get(i).setImageResource(R.drawable.unknown_romon); // TODO: Proper icons
+            dexIcons.get(i).setImageResource(dexRomon.get(i).getDrawableResource());
         }
 
         for(int i = 0; i < bankRomon.size(); ++i)
@@ -80,7 +80,7 @@ public class ListActivity extends Activity implements View.OnClickListener
             bankNames.get(i).setText(bankRomon.get(i).getNickname());
 
             bankIcons.add(i, new ImageView(this));
-            bankIcons.get(i).setImageResource(R.drawable.unknown_romon); // TODO: Proper icons
+            bankIcons.get(i).setImageResource(bankRomon.get(i).getDrawableResource());
         }
 
         // Showing the dex values initially

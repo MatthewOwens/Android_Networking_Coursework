@@ -7,16 +7,16 @@ package com.a1400971example.android_networking_coursework;
 public class Romon {
     private String name;
     private String nickname;
-    private String drawableName;
+    private int drawableResource;
 
-    public Romon(String name, String nickname, String drawableName)
+    public Romon(String name, String nickname, int drawableResource)
     {
         this.name = name;
         this.nickname = nickname;
-        this.drawableName = drawableName;
+        this.drawableResource = drawableResource;
     }
 
     public String getName() {return name;}
     public String getNickname() {return nickname;}
-    public String getDrawableName(){return drawableName;}
+    public int getDrawableResource() {return drawableResource;}
 }

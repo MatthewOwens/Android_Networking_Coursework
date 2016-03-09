@@ -3,6 +3,7 @@ package com.a1400971example.android_networking_coursework;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -25,7 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
             DEX_COLUMN_NAMES[0] + " TEXT, " +
-            DEX_COLUMN_NAMES[1] + " TEXT, " +
+            DEX_COLUMN_NAMES[1] + " INTEGER, " +
             DEX_COLUMN_NAMES[2] + " INTEGER, " + // Using INTEGER since BIT is unsupported
             DEX_COLUMN_NAMES[3] + " INTEGER);";
 
@@ -33,7 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String BANK_TABLE_CREATE = "CREATE TABLE " + BANK_TABLE_NAME + " (" +
             BANK_COLUMN_NAMES[0] + " TEXT, " +
             BANK_COLUMN_NAMES[1] + " TEXT, " +
-            BANK_COLUMN_NAMES[2] + " TEXT);";
+            BANK_COLUMN_NAMES[2] + " INTEGER);";
 
     DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -48,8 +49,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(BANK_TABLE_CREATE);
 
         // DEX table initial values, nonsense for testing
+        // TODO: Populate with appropriate resources
         for (int i = 0; i < 5; ++i)
-            addRomonDex("testRomon" + i, "romon" + i, db);
+            addRomonDex("testRomon" + i, R.drawable.unknown_romon, db);
     }
 
     @Override
@@ -57,11 +59,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     //private void addRomonDex(String name, String imgPath)
-    private void addRomonDex(String name, String imgPath, SQLiteDatabase db) {
+    private void addRomonDex(String name, int resourceName, SQLiteDatabase db) {
         ContentValues row = new ContentValues();
 
         row.put(DEX_COLUMN_NAMES[0], name);
-        row.put(DEX_COLUMN_NAMES[1], imgPath);
+        row.put(DEX_COLUMN_NAMES[1], resourceName);
         row.put(DEX_COLUMN_NAMES[2], 0);
         row.put(DEX_COLUMN_NAMES[3], 0);
 
@@ -180,6 +182,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    public Romon getDexRomon(int id)
+    {
+        Romon val = null;
+        SQLiteDatabase db = this.getReadableDatabase();
+        String idString = "'" + id + "'";
+
+        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "id=" + idString,
+                null, null, null, null);
+
+        if(result == null)
+        {
+            Log.i(TAG, "getDexRomon(int id): invalid result!");
+            result.close();
+        }
+        else
+        {
+            val = new Romon(result.getString(0), result.getString(0), result.getInt(1));
+        }
+        return val;
+    }
+
     public ArrayList<Romon> getDexRomon()
     {
         ArrayList<Romon> romons = new ArrayList<Romon>();
@@ -197,7 +220,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             for(int i = 0; i < romonCount; ++i)
             {
-                romons.add(new Romon(result.getString(0), result.getString(0), result.getString(1)));
+                romons.add(new Romon(result.getString(0), result.getString(0), result.getInt(1)));
                 result.moveToNext();
             }
         }
@@ -223,7 +246,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             for(int i = 0; i < romonCount; ++i)
             {
-                romons.add(new Romon(result.getString(0), result.getString(1), result.getString(2)));
+                romons.add(new Romon(result.getString(0), result.getString(1), result.getInt(2)));
                 result.moveToNext();
             }
         }
