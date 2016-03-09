@@ -231,4 +231,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         //db.close();
         return romons;
     }
+
+    public void clearBank()
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + BANK_TABLE_NAME);
+    }
 }

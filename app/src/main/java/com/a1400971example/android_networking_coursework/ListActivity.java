@@ -23,20 +23,20 @@ public class ListActivity extends Activity implements View.OnClickListener
 {
     private final static String TAG = "ListActivity";
 
-    Button toggleButton;
-    boolean viewingDex = true;
-    DatabaseHelper dbHelper;
+    private Button toggleButton;
+    private boolean viewingDex = true;
+    private DatabaseHelper dbHelper;
 
-    ArrayList<Romon> dexRomon;
-    ArrayList<Romon> bankRomon;
+    private ArrayList<Romon> dexRomon;
+    private ArrayList<Romon> bankRomon;
 
-    ArrayList<TextView> dexNames = new ArrayList<TextView>();
-    ArrayList<ImageView> dexIcons = new ArrayList<ImageView>();
+    private ArrayList<TextView> dexNames = new ArrayList<TextView>();
+    private ArrayList<ImageView> dexIcons = new ArrayList<ImageView>();
 
-    ArrayList<TextView> bankNames= new ArrayList<TextView>();
-    ArrayList<ImageView> bankIcons = new ArrayList<ImageView>();
+    private ArrayList<TextView> bankNames= new ArrayList<TextView>();
+    private ArrayList<ImageView> bankIcons = new ArrayList<ImageView>();
 
-    GridLayout gridLayout;
+    private GridLayout gridLayout;
 
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -61,8 +61,8 @@ public class ListActivity extends Activity implements View.OnClickListener
         dexRomon = dbHelper.getDexRomon();
         bankRomon = dbHelper.getBankRomon();
 
-        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-        layoutParams.setGravity(Gravity.RIGHT);
+        //GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        //layoutParams.setGravity(Gravity.RIGHT);
 
         // Setting up the dex view
         for(int i = 0; i < dexRomon.size(); ++i)
@@ -77,7 +77,7 @@ public class ListActivity extends Activity implements View.OnClickListener
         for(int i = 0; i < bankRomon.size(); ++i)
         {
             bankNames.add(i, new TextView(this));
-            bankNames.get(i).setText(bankRomon.get(i).getName());
+            bankNames.get(i).setText(bankRomon.get(i).getNickname());
 
             bankIcons.add(i, new ImageView(this));
             bankIcons.get(i).setImageResource(R.drawable.unknown_romon); // TODO: Proper icons

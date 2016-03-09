@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/battle_enemyImage"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="2" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="VS"
+        android:id="@+id/battle_vsTextView"
+        android:layout_gravity="center_horizontal"
+        android:textColor="#b35050"
+        android:textSize="84dp"
+        android:textStyle="bold|italic"
+        android:layout_weight=".1"
+        android:textAlignment="gravity"
+        android:elegantTextHeight="false"
+        android:singleLine="false"
+        android:gravity="center_vertical|center_horizontal" />
+
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/battle_friendlyImage"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="2" />
+</LinearLayout>

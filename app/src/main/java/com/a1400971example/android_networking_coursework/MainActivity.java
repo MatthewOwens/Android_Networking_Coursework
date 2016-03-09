@@ -26,7 +26,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Button[] buttons = new Button[3];
     private ImageView foundImg;
 
-    Romon foundRomon;
+    private Romon foundRomon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +51,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         vibrator = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
         Log.i(TAG, "vibrator: " + vibrator.hasVibrator());
+
+        // Clearing the bank for testing
+        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+        //db.clearBank();
     }
 
     @Override
@@ -111,8 +115,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Battle
         if (view == buttons[0]) {
             Log.i(TAG, "Battle button pressed!");
-            //Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
-            //startActivity(intent);
+            Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
+            startActivity(intent);
         }
 
         // Trade
@@ -136,8 +140,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     "Lat: " + locHelper.getLatitude() + "\nLong: " + locHelper.getLongtitude(),
                     Toast.LENGTH_LONG).show();
 
-            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
-            db.addRomonBank(foundRomon);
+            // Preventing horrible things
+            if(foundRomon != null) {
+                DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+                db.addRomonBank(foundRomon);
+
+                // Preventing adding the same romon multiple times
+                foundImg.setVisibility(View.INVISIBLE);
+                foundRomon = null;
+            }
         }
     }
 
