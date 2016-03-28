@@ -44,11 +44,11 @@ public class LocationHelper extends Service implements LocationListener {
 
     public LocationHelper(Context context) {
         this.context = context;
-        checkPermission((Activity)context);     // TODO: Fix this quick hack
+        //checkPermission((Activity)context);     // TODO: Fix this quick hack, if needed
         getLocation();
     }
 
-    public void checkPermission(Activity currentActivity) {
+    /*public void checkPermission(Activity currentActivity) {
         int permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION);
 
         if (permission != PackageManager.PERMISSION_GRANTED)
@@ -58,8 +58,9 @@ public class LocationHelper extends Service implements LocationListener {
             ActivityCompat.requestPermissions(currentActivity,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     FINE_ACCESS_REQUEST);
+
         }
-    }
+    }*/
 
     public Location getLocation() {
         // Requesting the location service

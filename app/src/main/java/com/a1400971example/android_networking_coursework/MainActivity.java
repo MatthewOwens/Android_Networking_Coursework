@@ -30,6 +30,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //android.os.Debug.waitForDebugger();
         super.onCreate(savedInstanceState);
 
         // Fullscreen
@@ -86,6 +87,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // User hasn't opened the app before, give them a freebie
         if (prevOpened == -1) {
             Log.i(TAG, "Monster found -- initial");
+
+            // Populating the remote DB here for now, since it's quicker to do it via code
+            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+
         }
         else
         {
@@ -100,7 +105,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 Log.i(TAG, "Monster found -- rolled");
 
                 // TODO: Determine found romon based on latitude & longtitude
-                foundRomon = new Romon("testRomon0", "testNick", R.drawable.unknown_romon);
+                foundRomon = new Romon("bankRomon0", "testNick", R.drawable.unknown_romon);
                 foundImg.setImageResource(foundRomon.getDrawableResource());
             }
             else

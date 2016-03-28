@@ -8,15 +8,26 @@ public class Romon {
     private String name;
     private String nickname;
     private int drawableResource;
+    private int captureCount;
 
     public Romon(String name, String nickname, int drawableResource)
     {
         this.name = name;
         this.nickname = nickname;
         this.drawableResource = drawableResource;
+        this.captureCount = 1;
+    }
+
+    public Romon(String name, int drawableResource, int captureCount)
+    {
+        this.name = name;
+        this.drawableResource = drawableResource;
+        this.captureCount = captureCount;
+        this.nickname = name;
     }
 
     public String getName() {return name;}
     public String getNickname() {return nickname;}
     public int getDrawableResource() {return drawableResource;}
+    public int getCaptureCount() {return captureCount;}
 }

@@ -6,8 +6,25 @@ import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpRetryException;
 import java.util.ArrayList;
 
 /**
@@ -22,6 +39,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String BANK_TABLE_NAME = "Bank";
     private static final String[] DEX_COLUMN_NAMES = {"name", "drawable_name", "captured", "encounter_count"};
     private static final String[] BANK_COLUMN_NAMES = {"name", "nickname", "drawable_name"};
+
+    // Remote database stuff
+    private final String rootURL = "http://mayar.abertay.ac.uk/~1400971";
+    private final String insertURL = rootURL + "insert_dex.php";
+    private final String getListURL = rootURL + "getlist.php";
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
@@ -50,15 +72,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // DEX table initial values, nonsense for testing
         // TODO: Populate with appropriate resources
-        for (int i = 0; i < 5; ++i)
-            addRomonDex("testRomon" + i, R.drawable.unknown_romon, db);
+
+        //for (int i = 0; i < 5; ++i)
+        //    addRomonDex("testRomon" + i, R.drawable.unknown_romon, db);
+
+        // TODO: Figure out why addRomonDex seems to do _nothing_ here
+        Romon romon = new Romon("testRomon01", R.drawable.unknown_romon, 0);
+        addRomonDex(romon);
+
+        /*
+            for(int i = 0; i < 5; ++i)
+                addRomonDex(new Romon("Romon" + i, R.drawable.unknown_romon, 0));
+         */
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     }
 
-    //private void addRomonDex(String name, String imgPath)
     private void addRomonDex(String name, int resourceName, SQLiteDatabase db) {
         ContentValues row = new ContentValues();
 
@@ -70,6 +101,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert(DEX_TABLE_NAME, null, row);
         //db.close();
         Log.i(TAG, "addRomonDex completed");
+    }
+
+    private void addRomonDex(Romon romon){
+        AddDexTask task = new AddDexTask();
+        task.execute(romon);
     }
 
     public void addRomonBank(int DexPosition, String nickname) {
@@ -108,7 +144,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Querying the DEX database to match iamges
         Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "name=" + nameSearch, null, null, null, null);
 
-        // Checking that the result is valud
+        // Checking that the result is valid
         if(result == null)
             Log.i(TAG, "addRomonBank: invalid result!");
         else
@@ -259,5 +295,96 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("DELETE FROM " + BANK_TABLE_NAME);
+    }
+
+    // Async task for adding a new romon to the remote Dex, runs on a separate thread
+    private class AddDexTask extends AsyncTask<Romon, Void, Void>{
+        private HttpClient httpClient = new DefaultHttpClient();
+        private HttpPost httpPost = new HttpPost(insertURL);
+
+        @Override
+        protected Void doInBackground(Romon... params) {
+            Log.i(TAG, "dex add started...");
+            // Ensuring that we check all of the params, not just the first
+            for(Romon romon : params)
+            {
+                Log.i(TAG, "checking the romon passed through");
+                // Associating column names and romon members as key-value pairs
+                ArrayList<NameValuePair> romonDetails = new ArrayList<NameValuePair>(4);
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[0], romon.getName()));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[1], Integer.toString(romon.getDrawableResource())));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[2], Boolean.toString(romon.getCaptureCount() > 0)));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Integer.toString(romon.getCaptureCount())));
+                Log.i(TAG, "romon details added");
+
+                // Encoding the HTTP POST request
+                try
+                {
+                    httpPost.setEntity(new UrlEncodedFormEntity(romonDetails));
+                }
+                catch (UnsupportedEncodingException e)
+                {
+                    e.printStackTrace();
+                }
+                Log.i(TAG, "post created");
+
+                // Making the request to the server
+                try
+                {
+                    Log.i(TAG, "MAKING THE REQUEST!!!");
+                    HttpResponse response = httpClient.execute(httpPost);
+                    Log.i(TAG, "YAS!");
+
+                    HttpEntity entity = response.getEntity();
+                    String responseString = EntityUtils.toString(entity, "UTF-8");
+
+                    Log.i(TAG, "'Add' Response: " + responseString);
+                }
+                catch (IOException e)
+                {
+                    Log.i(TAG, "bollocks");
+                    e.printStackTrace();
+                }
+                catch (Exception e) // Trying for generics
+                {
+                    Log.i(TAG, "generic bollocks");
+                    e.printStackTrace();
+                }
+            }
+            Log.i(TAG, "Remote Dex DB add completed!");
+            return null;
+        }
+    }
+
+    // Async task for getting the dex list from a remote DB, runs on a separate thread
+    private class GetDexTask extends AsyncTask<Void, Void, ArrayList<Romon>>
+    {
+        private HttpClient httpClient = new DefaultHttpClient();
+        private HttpGet httpGet = new HttpGet(getListURL);
+
+        @Override
+        protected ArrayList<Romon> doInBackground(Void... params) {
+            // Make a request for the data
+            HttpResponse response = null;
+            String responseString = "";
+            try
+            {
+                response = httpClient.execute(httpGet);
+                HttpEntity entity = response.getEntity();
+                responseString = EntityUtils.toString(entity, "UTF-8");
+
+                Log.i(TAG, "'Get' Response: " + responseString);
+            }
+            catch (ClientProtocolException e)
+            {
+                e.printStackTrace();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+            Log.i(TAG, "Remote Dex get completed!");
+            return null;
+        }
     }
 }
