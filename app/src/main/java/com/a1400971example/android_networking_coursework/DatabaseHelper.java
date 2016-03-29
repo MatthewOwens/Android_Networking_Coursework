@@ -21,6 +21,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -41,9 +44,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String[] BANK_COLUMN_NAMES = {"name", "nickname", "drawable_name"};
 
     // Remote database stuff
-    private final String rootURL = "http://mayar.abertay.ac.uk/~1400971";
-    private final String insertURL = rootURL + "insert_dex.php";
-    private final String getListURL = rootURL + "getlist.php";
+    private final String rootURL = "http://mayar.abertay.ac.uk/~1400971/";
+    private final String insertURL = rootURL + "AndroidNetworking/Romon/php/insert_dex.php";
+    private final String getListURL = rootURL + "AndroidNetworking/Romon/php/getlist.php";
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
@@ -78,7 +81,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // TODO: Figure out why addRomonDex seems to do _nothing_ here
         Romon romon = new Romon("testRomon01", R.drawable.unknown_romon, 0);
+        Log.i(TAG, "DRAWABLE: " + R.drawable.unknown_romon);
         addRomonDex(romon);
+
+        // Getting the dex
+        //ArrayList<Romon> dexList = new ArrayList<Romon>();
+        //GetDexTask dexTask = new GetDexTask<>();
+        //dexList = dexTask.execute();
 
         /*
             for(int i = 0; i < 5; ++i)
@@ -384,7 +393,48 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 e.printStackTrace();
             }
             Log.i(TAG, "Remote Dex get completed!");
-            return null;
+
+            // Processing the JSON results
+            JSONArray romonArray = null;
+            if(responseString != null && responseString != "")
+            {
+                try
+                {
+                    romonArray = new JSONArray(responseString);
+                }
+                catch(JSONException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            // Parsing our results
+            ArrayList<Romon> ret = new ArrayList<Romon>();
+
+            if(romonArray != null)
+            {
+                for(int i = 0; i < romonArray.length(); ++i)
+                {
+                    try
+                    {
+                        JSONObject entry = romonArray.getJSONObject(i);
+                        ret.add(new Romon((String)entry.get(DEX_COLUMN_NAMES[0].toString()),
+                                entry.getInt(DEX_COLUMN_NAMES[1]),
+                                entry.getInt(DEX_COLUMN_NAMES[3])));
+                    }
+                    catch (JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Romon> result)
+        {
+            Log.i(TAG, "DEX POPULATED!");
         }
     }
 }
