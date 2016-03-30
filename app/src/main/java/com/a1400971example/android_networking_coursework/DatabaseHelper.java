@@ -6,7 +6,9 @@ import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -41,26 +43,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "RomonDB";
     private static final String DEX_TABLE_NAME = "Dex";
     private static final String BANK_TABLE_NAME = "Bank";
-    private static final String[] DEX_COLUMN_NAMES = {"name", "drawable_name", "captured", "encounter_count"};
-    private static final String[] BANK_COLUMN_NAMES = {"name", "nickname", "drawable_name"};
+    private static final String[] DEX_COLUMN_NAMES = {"_id", "name", "drawable_name", "captured", "encounter_count"};
+    private static final String[] BANK_COLUMN_NAMES = {"_id", "name", "nickname", "drawable_name"};
 
     // Remote database stuff
     private final String rootURL = "http://mayar.abertay.ac.uk/~1400971/";
     private final String insertURL = rootURL + "AndroidNetworking/Romon/php/insert_dex.php";
     private final String getListURL = rootURL + "AndroidNetworking/Romon/php/getlist.php";
+    private final String deleteURL = rootURL + "AndroidNetworking/Romon/php/remove_dex.php";
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
-            DEX_COLUMN_NAMES[0] + " TEXT, " +
-            DEX_COLUMN_NAMES[1] + " INTEGER, " +
-            DEX_COLUMN_NAMES[2] + " INTEGER, " + // Using INTEGER since BIT is unsupported
-            DEX_COLUMN_NAMES[3] + " INTEGER);";
+            DEX_COLUMN_NAMES[0] + " INTEGER PRIMARY KEY, " +
+            DEX_COLUMN_NAMES[1] + " TEXT, " +
+            DEX_COLUMN_NAMES[2] + " INTEGER, " +
+            DEX_COLUMN_NAMES[3] + " INTEGER, " + // Using INTEGER since BIT is unsupported
+            DEX_COLUMN_NAMES[4] + " INTEGER);";
 
     // Bank table's CREATE string
     private static final String BANK_TABLE_CREATE = "CREATE TABLE " + BANK_TABLE_NAME + " (" +
-            BANK_COLUMN_NAMES[0] + " TEXT, " +
+            BANK_COLUMN_NAMES[0] + " INTEGER PRIMARY KEY, " +
             BANK_COLUMN_NAMES[1] + " TEXT, " +
-            BANK_COLUMN_NAMES[2] + " INTEGER);";
+            BANK_COLUMN_NAMES[2] + " TEXT, " +
+            BANK_COLUMN_NAMES[3] + " INTEGER);";
 
     DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -73,6 +78,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Creates the database if it doesn't exist and adds the DEX and STORED tables
         db.execSQL(DEX_TABLE_CREATE);
         db.execSQL(BANK_TABLE_CREATE);
+
+        updateDex(db);
+    }
+
+    private void updateDex(SQLiteDatabase db)
+    {
 
         // Getting the dex
         ArrayList<Romon> dexList = null;
@@ -113,15 +124,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Dropping the current dex table and replacing it with the remote
+        db.execSQL("DROP TABLE " + DEX_TABLE_NAME);
+        updateDex(db);
     }
 
     private void addRomonDex(String name, int resourceName, SQLiteDatabase db) {
         ContentValues row = new ContentValues();
 
-        row.put(DEX_COLUMN_NAMES[0], name);
-        row.put(DEX_COLUMN_NAMES[1], resourceName);
-        row.put(DEX_COLUMN_NAMES[2], 0);
+        row.put(DEX_COLUMN_NAMES[1], name);
+        row.put(DEX_COLUMN_NAMES[2], resourceName);
         row.put(DEX_COLUMN_NAMES[3], 0);
+        row.put(DEX_COLUMN_NAMES[4], 0);
 
         db.insert(DEX_TABLE_NAME, null, row);
         //db.close();
@@ -132,20 +146,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private void addRomonDex(Romon romon, SQLiteDatabase db)
     {
         ContentValues row = new ContentValues();
-        row.put(DEX_COLUMN_NAMES[0], romon.getName());
-        row.put(DEX_COLUMN_NAMES[1], romon.getDrawableResource());
-        row.put(DEX_COLUMN_NAMES[2], 0);
+        row.put(DEX_COLUMN_NAMES[1], romon.getName());
+        row.put(DEX_COLUMN_NAMES[2], romon.getDrawableResource());
         row.put(DEX_COLUMN_NAMES[3], 0);
+        row.put(DEX_COLUMN_NAMES[4], 0);
 
         db.insert(DEX_TABLE_NAME, null, row);
         Log.i(TAG, "added " + romon.getName() + " to the dex!");
     }
 
     // Adding romon to the remote dex DB, makes testing things a hell of a lot faster
-    private void addRomonDexRemote(Romon... romons)
+    public void addRomonDexRemote(Romon... romons)
     {
         AddDexTask task = new AddDexTask();
         task.execute(romons);
+    }
+
+    public void removeRomonDexRemote(Integer... ids)
+    {
+        DeleteDexTask task = new DeleteDexTask();
+        task.execute(ids);
     }
 
     public void addRomonBank(int DexPosition, String nickname) {
@@ -153,25 +173,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues row = new ContentValues();
 
         // Querying the DEX database to see if there's any matches at DexPosition
-        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "id=" + DexPosition, null, null, null, null);
+        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "_id=" + DexPosition, null, null, null, null);
 
         // Checking that the result was valid
         if (result == null)
             Log.i(TAG, "addRomonBank: invlid result!");
         else {
-            row.put(BANK_COLUMN_NAMES[0], result.getString(0)); // Assigning the bank name to the dex name
+            row.put(BANK_COLUMN_NAMES[1], result.getString(1)); // Assigning the bank name to the dex name
 
             if (nickname == "")
-                row.put(BANK_COLUMN_NAMES[1], result.getString(0)); // Assigning the bank nick to the dex name
+                row.put(BANK_COLUMN_NAMES[2], result.getString(1)); // Assigning the bank nick to the dex name
             else
-                row.put(BANK_COLUMN_NAMES[1], nickname);
+                row.put(BANK_COLUMN_NAMES[2], nickname);
 
-            row.put(BANK_COLUMN_NAMES[2], result.getString(1)); // Assigning the bank path to the dex path
+            row.put(BANK_COLUMN_NAMES[3], result.getString(2)); // Assigning the bank path to the dex path
 
             db.insert(BANK_TABLE_NAME, null, row);
         }
 
-        result.close();
+        //result.close();
         //db.close();
     }
 
@@ -191,21 +211,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         {
             result.moveToFirst();
 
-            row.put(BANK_COLUMN_NAMES[0], result.getString(0));
+            row.put(BANK_COLUMN_NAMES[1], result.getString(1));
 
             // If there's no nickname
             if(romon.getNickname() == "" || romon.getNickname() == romon.getName())
-                row.put(BANK_COLUMN_NAMES[1], result.getString(0));
-            else row.put(BANK_COLUMN_NAMES[1], romon.getNickname());
+                row.put(BANK_COLUMN_NAMES[2], result.getString(1));
+            else row.put(BANK_COLUMN_NAMES[2], romon.getNickname());
 
             // Image strings
-            row.put(BANK_COLUMN_NAMES[2], result.getString(1));
+            row.put(BANK_COLUMN_NAMES[3], result.getString(2));
 
             // TODO: Change dex capured and encoutner_count flags
             db.insert(BANK_TABLE_NAME, null, row);
         }
 
-        result.close();
+        //result.close();
     }
 
 
@@ -225,13 +245,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if(result == null)
         {
             Log.i(TAG, "getDexCount: invalid result!");
-            result.close();
+            //result.close();
             //db.close();
             return -1;
         }
         else
         {
-            result.close();
+            //result.close();
             //db.close();
             return result.getCount();
         }
@@ -246,13 +266,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if(result == null)
         {
             Log.i(TAG, "getBankCount: invalid result!");
-            result.close();
+            //result.close();
             //db.close();
             return -1;
         }
         else
         {
-            result.close();
+            //result.close();
             //db.close();
             return result.getCount();
         }
@@ -260,21 +280,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Romon getDexRomon(int id)
     {
+        // Incrementing the id, since the database _id column starts from 1
+        id++;
+
         Romon val = null;
         SQLiteDatabase db = this.getReadableDatabase();
         String idString = "'" + id + "'";
 
-        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "id=" + idString,
+        Cursor result = db.query(DEX_TABLE_NAME, DEX_COLUMN_NAMES, "_id=" + idString,
                 null, null, null, null);
 
         if(result == null)
         {
             Log.i(TAG, "getDexRomon(int id): invalid result!");
-            result.close();
+            //result.close();
         }
         else
         {
-            val = new Romon(result.getString(0), result.getString(0), result.getInt(1));
+            result.moveToFirst();
+            val = new Romon(result.getString(1), result.getString(1), result.getInt(2));
         }
         return val;
     }
@@ -296,11 +320,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             for(int i = 0; i < romonCount; ++i)
             {
-                romons.add(new Romon(result.getString(0), result.getString(0), result.getInt(1)));
+                romons.add(new Romon(result.getString(1), result.getString(1), result.getInt(2)));
                 result.moveToNext();
             }
         }
-        result.close();
+        //result.close();
         //db.close();
         return romons;
     }
@@ -322,11 +346,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             for(int i = 0; i < romonCount; ++i)
             {
-                romons.add(new Romon(result.getString(0), result.getString(1), result.getInt(2)));
+                romons.add(new Romon(result.getString(1), result.getString(2), result.getInt(3)));
                 result.moveToNext();
             }
         }
-        result.close();
+        //result.close();
         //db.close();
         return romons;
     }
@@ -350,10 +374,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             {
                 // Associating column names and romon members as key-value pairs
                 ArrayList<NameValuePair> romonDetails = new ArrayList<NameValuePair>(4);
-                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[0], romon.getName()));
-                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[1], Integer.toString(romon.getDrawableResource())));
-                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[2], Boolean.toString(romon.getCaptureCount() > 0)));
-                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Integer.toString(romon.getCaptureCount())));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[1], romon.getName()));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[2], Integer.toString(romon.getDrawableResource())));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Boolean.toString(romon.getCaptureCount() > 0)));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[4], Integer.toString(romon.getCaptureCount())));
 
                 // Encoding the HTTP POST request
                 try
@@ -442,9 +466,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     try
                     {
                         JSONObject entry = romonArray.getJSONObject(i);
-                        ret.add(new Romon((String)entry.get(DEX_COLUMN_NAMES[0].toString()),
-                                entry.getInt(DEX_COLUMN_NAMES[1]),
-                                entry.getInt(DEX_COLUMN_NAMES[3])));
+                        ret.add(new Romon((String)entry.get(DEX_COLUMN_NAMES[1].toString()),
+                                entry.getInt(DEX_COLUMN_NAMES[2]),
+                                entry.getInt(DEX_COLUMN_NAMES[4])));
                     }
                     catch (JSONException e)
                     {
@@ -459,6 +483,53 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         protected void onPostExecute(ArrayList<Romon> result)
         {
             Log.i(TAG, "DEX POPULATED!");
+        }
+    }
+
+    private class DeleteDexTask extends AsyncTask<Integer, Void, Void>
+    {
+        private HttpClient httpClient = new DefaultHttpClient();
+        private HttpPost httpPost = new HttpPost(deleteURL);
+
+        @Override
+        protected Void doInBackground(Integer... ids)
+        {
+            // Ensuring that we remove all specified ids
+            for(Integer id : ids)
+            {
+                ArrayList<NameValuePair> idDetails = new ArrayList<NameValuePair>(1);
+                idDetails.add(new BasicNameValuePair("_id", id.toString()));
+
+                // Encoding the POST data
+                try
+                {
+                    httpPost.setEntity(new UrlEncodedFormEntity(idDetails));
+                }
+                catch (UnsupportedEncodingException e)
+                {
+                    e.printStackTrace();
+                }
+
+                // Making the request
+                try
+                {
+                    HttpResponse response = httpClient.execute(httpPost);
+                    HttpEntity entity = response.getEntity();
+                    String responseString = EntityUtils.toString(entity, "UTF-8");
+
+                    Log.i(TAG, "Remove response: " + responseString);
+                }
+                catch (ClientProtocolException e)
+                {
+                    e.printStackTrace();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -10,7 +10,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.util.Random;
 
@@ -25,8 +28,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private Button[] buttons = new Button[3];
     private ImageView foundImg;
+    private TextView titleText;
 
     private Romon foundRomon;
+    private boolean zAdded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +50,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         buttons[1] = (Button) findViewById(R.id.tradeButton);
         buttons[2] = (Button) findViewById(R.id.listButton);
         foundImg = (ImageView) findViewById(R.id.foundImage);
+        titleText = (TextView) findViewById(R.id.titleText);
 
         for (int i = 0; i < 3; ++i)
             buttons[i].setOnClickListener(this);
@@ -90,6 +96,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             // Populating the remote DB here for now, since it's quicker to do it via code
             DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+            Random rand = new Random();
+
+            // Giving the user a random romon for the first time
+            //foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
+            //foundImg.setImageResource(foundRomon.getDrawableResource());
 
         }
         else
@@ -104,9 +115,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
             {
                 Log.i(TAG, "Monster found -- rolled");
 
+                // Ensuring that the we can click the image
+                foundImg.setVisibility(View.VISIBLE);
+                DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+                Random rand = new Random();
+
                 // TODO: Determine found romon based on latitude & longtitude
-                foundRomon = new Romon("bankRomon0", "testNick", R.drawable.unknown_romon);
+                foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
                 foundImg.setImageResource(foundRomon.getDrawableResource());
+                //foundRomon = new Romon("A-mon", "Alan", R.drawable.unknown_romon);
+                //foundImg.setImageResource(foundRomon.getDrawableResource());
             }
             else
             {
@@ -156,6 +174,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 foundImg.setVisibility(View.INVISIBLE);
                 foundRomon = null;
             }
+        }
+
+        if(view == titleText)
+        {
+
+            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+
+            if(!zAdded)
+            {
+                // Adding Z-mon to the remote DB
+                Romon zmon = new Romon("Z-mon", R.drawable.z_romon, 0);
+                db.addRomonDexRemote(zmon);
+                zAdded = true;
+            }
+            else db.removeRomonDexRemote(5);
+
         }
     }
 
