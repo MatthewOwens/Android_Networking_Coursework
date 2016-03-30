@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpRetryException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by Matthew Owens on 06/03/16.
@@ -73,21 +74,36 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(DEX_TABLE_CREATE);
         db.execSQL(BANK_TABLE_CREATE);
 
-        // DEX table initial values, nonsense for testing
-        // TODO: Populate with appropriate resources
-
-        //for (int i = 0; i < 5; ++i)
-        //    addRomonDex("testRomon" + i, R.drawable.unknown_romon, db);
-
-        // TODO: Figure out why addRomonDex seems to do _nothing_ here
-        Romon romon = new Romon("testRomon01", R.drawable.unknown_romon, 0);
-        Log.i(TAG, "DRAWABLE: " + R.drawable.unknown_romon);
-        addRomonDex(romon);
-
         // Getting the dex
-        //ArrayList<Romon> dexList = new ArrayList<Romon>();
-        //GetDexTask dexTask = new GetDexTask<>();
-        //dexList = dexTask.execute();
+        ArrayList<Romon> dexList = null;
+        GetDexTask dexTask = new GetDexTask();
+
+        try
+        {
+            dexList = new ArrayList<Romon>();
+            dexList = dexTask.execute().get();
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        catch (ExecutionException e)
+        {
+            e.printStackTrace();
+        }
+
+        if(dexList != null)
+        {
+            Log.i(TAG, "dexList populated!");
+
+            // Populating the local dex database
+            for (Romon romon : dexList)
+            {
+                addRomonDex(romon, db);
+            }
+        }
+        else
+            Log.i(TAG, "dexList population failed!");
 
         /*
             for(int i = 0; i < 5; ++i)
@@ -112,9 +128,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.i(TAG, "addRomonDex completed");
     }
 
-    private void addRomonDex(Romon romon){
+    // Adding romon to the local dex DB
+    private void addRomonDex(Romon romon, SQLiteDatabase db)
+    {
+        ContentValues row = new ContentValues();
+        row.put(DEX_COLUMN_NAMES[0], romon.getName());
+        row.put(DEX_COLUMN_NAMES[1], romon.getDrawableResource());
+        row.put(DEX_COLUMN_NAMES[2], 0);
+        row.put(DEX_COLUMN_NAMES[3], 0);
+
+        db.insert(DEX_TABLE_NAME, null, row);
+        Log.i(TAG, "added " + romon.getName() + " to the dex!");
+    }
+
+    // Adding romon to the remote dex DB, makes testing things a hell of a lot faster
+    private void addRomonDexRemote(Romon... romons)
+    {
         AddDexTask task = new AddDexTask();
-        task.execute(romon);
+        task.execute(romons);
     }
 
     public void addRomonBank(int DexPosition, String nickname) {
@@ -317,14 +348,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Ensuring that we check all of the params, not just the first
             for(Romon romon : params)
             {
-                Log.i(TAG, "checking the romon passed through");
                 // Associating column names and romon members as key-value pairs
                 ArrayList<NameValuePair> romonDetails = new ArrayList<NameValuePair>(4);
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[0], romon.getName()));
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[1], Integer.toString(romon.getDrawableResource())));
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[2], Boolean.toString(romon.getCaptureCount() > 0)));
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Integer.toString(romon.getCaptureCount())));
-                Log.i(TAG, "romon details added");
 
                 // Encoding the HTTP POST request
                 try
@@ -335,14 +364,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 {
                     e.printStackTrace();
                 }
-                Log.i(TAG, "post created");
 
                 // Making the request to the server
                 try
                 {
-                    Log.i(TAG, "MAKING THE REQUEST!!!");
                     HttpResponse response = httpClient.execute(httpPost);
-                    Log.i(TAG, "YAS!");
 
                     HttpEntity entity = response.getEntity();
                     String responseString = EntityUtils.toString(entity, "UTF-8");
@@ -351,12 +377,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
                 catch (IOException e)
                 {
-                    Log.i(TAG, "bollocks");
                     e.printStackTrace();
                 }
                 catch (Exception e) // Trying for generics
                 {
-                    Log.i(TAG, "generic bollocks");
                     e.printStackTrace();
                 }
             }
