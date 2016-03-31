@@ -32,6 +32,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private Romon foundRomon;
     private boolean zAdded = false;
+    private boolean zRemoved = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +55,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         for (int i = 0; i < 3; ++i)
             buttons[i].setOnClickListener(this);
+
         foundImg.setOnClickListener(this);
+        titleText.setOnClickListener(this);
 
         vibrator = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
         Log.i(TAG, "vibrator: " + vibrator.hasVibrator());
@@ -188,7 +191,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 db.addRomonDexRemote(zmon);
                 zAdded = true;
             }
-            else db.removeRomonDexRemote(5);
+            else if(!zRemoved)
+            {
+                db.removeRomonDexRemote("Z-mon");
+                zRemoved = true;
+            }
 
         }
     }

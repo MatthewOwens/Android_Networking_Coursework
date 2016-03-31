@@ -43,14 +43,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "RomonDB";
     private static final String DEX_TABLE_NAME = "Dex";
     private static final String BANK_TABLE_NAME = "Bank";
+    private static final String VERSIONS_TABLE_NAME = "Versions";
     private static final String[] DEX_COLUMN_NAMES = {"_id", "name", "drawable_name", "captured", "encounter_count"};
     private static final String[] BANK_COLUMN_NAMES = {"_id", "name", "nickname", "drawable_name"};
 
     // Remote database stuff
-    private final String rootURL = "http://mayar.abertay.ac.uk/~1400971/";
-    private final String insertURL = rootURL + "AndroidNetworking/Romon/php/insert_dex.php";
-    private final String getListURL = rootURL + "AndroidNetworking/Romon/php/getlist.php";
-    private final String deleteURL = rootURL + "AndroidNetworking/Romon/php/remove_dex.php";
+    private final String rootURL = "http://mayar.abertay.ac.uk/~1400971/AndroidNetworking/Romon/php/";
+    private final String insertURL = rootURL + "insert_dex.php";
+    private final String getListURL = rootURL + "getlist.php";
+    private final String deleteURL = rootURL + "remove_dex.php";
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
@@ -162,10 +163,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         task.execute(romons);
     }
 
-    public void removeRomonDexRemote(Integer... ids)
+    public void removeRomonDexRemote(String... names)
     {
         DeleteDexTask task = new DeleteDexTask();
-        task.execute(ids);
+        task.execute(names);
     }
 
     public void addRomonBank(int DexPosition, String nickname) {
@@ -376,7 +377,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 ArrayList<NameValuePair> romonDetails = new ArrayList<NameValuePair>(4);
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[1], romon.getName()));
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[2], Integer.toString(romon.getDrawableResource())));
-                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Boolean.toString(romon.getCaptureCount() > 0)));
+                romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[3], Integer.toString(0)));
                 romonDetails.add(new BasicNameValuePair(DEX_COLUMN_NAMES[4], Integer.toString(romon.getCaptureCount())));
 
                 // Encoding the HTTP POST request
@@ -486,19 +487,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    private class DeleteDexTask extends AsyncTask<Integer, Void, Void>
+    private class DeleteDexTask extends AsyncTask<String, Void, Void>
     {
         private HttpClient httpClient = new DefaultHttpClient();
         private HttpPost httpPost = new HttpPost(deleteURL);
 
         @Override
-        protected Void doInBackground(Integer... ids)
+        protected Void doInBackground(String... names)
         {
             // Ensuring that we remove all specified ids
-            for(Integer id : ids)
+            for(String name : names)
             {
                 ArrayList<NameValuePair> idDetails = new ArrayList<NameValuePair>(1);
-                idDetails.add(new BasicNameValuePair("_id", id.toString()));
+                idDetails.add(new BasicNameValuePair("name", name));
 
                 // Encoding the POST data
                 try
