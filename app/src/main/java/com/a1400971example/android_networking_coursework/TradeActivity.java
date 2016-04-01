@@ -1,6 +1,8 @@
 package com.a1400971example.android_networking_coursework;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -39,8 +41,7 @@ public class TradeActivity extends Activity implements View.OnClickListener {
     {
         super.onCreate(savedInstance);
 
-        //TODO: Switch to view layout for selection
-        //TODO: DB stuff
+        //TODO: Update bank database with new romon
         //TODO: bluetooth / NFC
 
         // Fullscreen
@@ -86,11 +87,16 @@ public class TradeActivity extends Activity implements View.OnClickListener {
         {
             Log.i(TAG, "Whee~~");
             // TODO: Change DB vals
+            romonImage.clearColorFilter();
+            otherRomonImage.clearColorFilter();
 
             // Switching romon images
             Drawable ourDrawable = romonImage.getDrawable();
             romonImage.setImageDrawable(otherRomonImage.getDrawable());
+
             otherRomonImage.setImageDrawable(ourDrawable);
+            otherRomonImage.setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
+
             tradeImage.setVisibility(View.INVISIBLE);
             tradeImage.setClickable(false);
 
@@ -113,7 +119,10 @@ public class TradeActivity extends Activity implements View.OnClickListener {
 
                 // ImageView init
                 romonImage = (ImageView) findViewById(R.id.romonImage);
+                romonImage.setImageResource(selectedRomon.getDrawableResource());
+
                 otherRomonImage = (ImageView) findViewById(R.id.otherRomonImage);
+                otherRomonImage.setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
                 tradeImage = (ImageView) findViewById(R.id.tradeImage);
 
                 // Setting the click listeners

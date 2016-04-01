@@ -153,9 +153,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Battle
         if (view == buttons[0]) {
             Log.i(TAG, "Battle button pressed!");
-            /*Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
-            startActivity(intent);*/
-            Toast.makeText(this, "DB Version: " + dbVersion, Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
+            startActivity(intent);
         }
 
         // Trade

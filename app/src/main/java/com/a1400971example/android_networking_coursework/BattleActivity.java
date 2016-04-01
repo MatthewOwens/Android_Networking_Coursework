@@ -1,6 +1,8 @@
 package com.a1400971example.android_networking_coursework;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -66,7 +68,7 @@ public class BattleActivity extends Activity implements View.OnClickListener
             list_textViews.get(i).setText(bankedRomon.get(i).getNickname());
 
             list_imageViews.add(i, new ImageView(this));
-            list_imageViews.get(i).setImageResource(R.drawable.unknown_romon);  // TODO: fix
+            list_imageViews.get(i).setImageResource(bankedRomon.get(i).getDrawableResource());
 
             list_textViews.get(i).setOnClickListener(this);
             list_imageViews.get(i).setOnClickListener(this);
@@ -113,6 +115,8 @@ public class BattleActivity extends Activity implements View.OnClickListener
 
                 battle_romonImages[0].setImageResource(selectedRomon.getDrawableResource());
                 battle_romonImages[1].setImageResource(R.drawable.unknown_romon);   // TODO: other romon
+
+                battle_romonImages[1].setColorFilter(Color.CYAN, PorterDuff.Mode.MULTIPLY);
 
                 for(int i = 0; i < 2; ++i)
                     battle_romonImages[i].setOnClickListener(this);
