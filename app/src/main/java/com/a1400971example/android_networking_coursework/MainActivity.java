@@ -3,8 +3,10 @@ package com.a1400971example.android_networking_coursework;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Vibrator;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -110,13 +112,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Log.i(TAG, "openTime: " + openTime);
         Log.i(TAG, "prevOpened: " + prevOpened);
 
+        LocationHelper locHelper = new LocationHelper(MainActivity.this);
+        /*Toast.makeText(getApplicationContext(),
+                "Lat: " + locHelper.getLatitude() + "\nLong: " + locHelper.getLongtitude(),
+                Toast.LENGTH_LONG).show();*/
+
         // User hasn't opened the app before, give them a freebie
         if (prevOpened == -1) {
             Log.i(TAG, "Monster found -- initial");
 
             // Giving the user a random romon for the first time
-            //foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
-            //foundImg.setImageResource(foundRomon.getDrawableResource());
+            foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
+            foundImg.setImageResource(foundRomon.getDrawableResource());
         }
         else
         {
@@ -133,9 +140,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 // Ensuring that the we can click the image
                 foundImg.setVisibility(View.VISIBLE);
 
-                // TODO: Determine found romon based on latitude & longtitude
-                foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
+                foundRomon = spawnRomon(locHelper.getLatitude(), locHelper.getLongtitude(), db);
                 foundImg.setImageResource(foundRomon.getDrawableResource());
+
                 //foundRomon = new Romon("A-mon", "Alan", R.drawable.unknown_romon);
                 //foundImg.setImageResource(foundRomon.getDrawableResource());
             }
@@ -144,6 +151,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 Log.i(TAG, "No monster found!");
             }
         }
+    }
+
+    Romon spawnRomon(double latitude, double longtitiude, DatabaseHelper db)
+    {
+        double seedval = Math.abs(latitude) + Math.abs(longtitiude);
+        int id;
+
+        for(id = db.getDexCount(); id > 1; id--)
+        {
+            if(seedval % id == 0)
+                break;
+        }
+        return db.getDexRomon(id);
     }
 
     public void onClick(View view) {
@@ -172,11 +192,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         if (view == foundImg) {
 
-            // Test location stuff, should be in onResume
-            LocationHelper locHelper = new LocationHelper(MainActivity.this);
-            Toast.makeText(getApplicationContext(),
-                    "Lat: " + locHelper.getLatitude() + "\nLong: " + locHelper.getLongtitude(),
-                    Toast.LENGTH_LONG).show();
 
             // Preventing horrible things
             if(foundRomon != null) {
