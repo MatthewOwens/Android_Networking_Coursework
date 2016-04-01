@@ -2,6 +2,7 @@ package com.a1400971example.android_networking_coursework;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
@@ -38,12 +39,11 @@ import java.util.concurrent.ExecutionException;
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    //private static final int DATABASE_VERSION = 1;
     private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "RomonDB";
     private static final String DEX_TABLE_NAME = "Dex";
     private static final String BANK_TABLE_NAME = "Bank";
-    private static final String VERSIONS_TABLE_NAME = "Versions";
     private static final String[] DEX_COLUMN_NAMES = {"_id", "name", "drawable_name", "captured", "encounter_count"};
     private static final String[] BANK_COLUMN_NAMES = {"_id", "name", "nickname", "drawable_name"};
 
@@ -52,6 +52,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private final String insertURL = rootURL + "insert_dex.php";
     private final String getListURL = rootURL + "getlist.php";
     private final String deleteURL = rootURL + "remove_dex.php";
+    private final String versionCheckURL = rootURL + "getVersion.php";
 
     // Dex table's CREATE string
     private static final String DEX_TABLE_CREATE = "CREATE TABLE " + DEX_TABLE_NAME + " (" +
@@ -68,8 +69,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             BANK_COLUMN_NAMES[2] + " TEXT, " +
             BANK_COLUMN_NAMES[3] + " INTEGER);";
 
-    DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    DatabaseHelper(Context context, int databaseVersion) {
+        super(context, DATABASE_NAME, null, databaseVersion);
 
     }
 
@@ -127,7 +128,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Dropping the current dex table and replacing it with the remote
         db.execSQL("DROP TABLE " + DEX_TABLE_NAME);
+        db.execSQL(DEX_TABLE_CREATE);
         updateDex(db);
+
+        // Updating the version in the database and our shared preferences
+        db.setVersion(newVersion);
+        Log.i(TAG, "Database upgraded from version " + oldVersion + " to " + newVersion);
     }
 
     private void addRomonDex(String name, int resourceName, SQLiteDatabase db) {
@@ -167,6 +173,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     {
         DeleteDexTask task = new DeleteDexTask();
         task.execute(names);
+    }
+
+    public int getRemoteVersion()
+    {
+        GetVersionTask task = new GetVersionTask();
+        try {
+            return task.execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        // Something went horribly wrong!
+        return -1;
     }
 
     public void addRomonBank(int DexPosition, String nickname) {
@@ -484,6 +505,42 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         protected void onPostExecute(ArrayList<Romon> result)
         {
             Log.i(TAG, "DEX POPULATED!");
+        }
+    }
+
+    private class GetVersionTask extends AsyncTask<Void, Void, Integer>
+    {
+        private HttpClient httpClient = new DefaultHttpClient();
+        private HttpPost httpGet = new HttpPost(versionCheckURL);
+
+        @Override
+        protected Integer doInBackground(Void... params)
+        {
+            // Make a request for the data
+            HttpResponse response = null;
+            String responseString = "";
+            Integer responseVal;
+            try
+            {
+                response = httpClient.execute(httpGet);
+                HttpEntity entity = response.getEntity();
+                responseString = EntityUtils.toString(entity, "UTF-8");
+                responseVal = Integer.parseInt(responseString);
+
+                Log.i(TAG, "'Get' Response: " + responseString);
+                return responseVal;
+            }
+            catch (ClientProtocolException e)
+            {
+                e.printStackTrace();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            // Something went wrong!
+            return -1;
         }
     }
 

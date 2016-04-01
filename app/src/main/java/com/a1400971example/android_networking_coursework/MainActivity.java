@@ -33,6 +33,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private Romon foundRomon;
     private boolean zAdded = false;
     private boolean zRemoved = false;
+    private int dbVersion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Fullscreen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        // Getthing the database version information
+        //SharedPreferences prefs = getPreferences(0);
+        SharedPreferences prefs = getSharedPreferences("prefs", 0);
+        dbVersion = prefs.getInt("dbVersion", 1);
+
+        // Updating our db version with the remote
+        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(), dbVersion);
+        dbVersion = db.getRemoteVersion();
+
+        // Updating our database version
+        SharedPreferences.Editor prefEditor = prefs.edit();
+        prefEditor.putInt("dbVersion", dbVersion);
+        prefEditor.commit();
 
         setContentView(R.layout.activity_main);
         Log.i(TAG, "onCreate");
@@ -63,7 +78,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Log.i(TAG, "vibrator: " + vibrator.hasVibrator());
 
         // Clearing the bank for testing
-        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
         //db.clearBank();
     }
 
@@ -73,7 +87,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Log.i(TAG, "onPause");
 
         // Getting the preferences file and editor
-        SharedPreferences prefs = getPreferences(0);
+        SharedPreferences prefs = getSharedPreferences("prefs", 0);
         SharedPreferences.Editor prefEditor = prefs.edit();
 
         prefEditor.putLong("closeTime", System.currentTimeMillis() / 1000L);
@@ -86,9 +100,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onResume();
         Log.i(TAG, "onResume");
 
-        SharedPreferences prefs = getPreferences(0);
+        SharedPreferences prefs = getSharedPreferences("prefs", 0);
         long openTime = System.currentTimeMillis() / 1000L;
         long prevOpened = prefs.getLong("closeTime", -1L);
+
+        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(), dbVersion);
+        Random rand = new Random();
 
         Log.i(TAG, "openTime: " + openTime);
         Log.i(TAG, "prevOpened: " + prevOpened);
@@ -97,14 +114,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (prevOpened == -1) {
             Log.i(TAG, "Monster found -- initial");
 
-            // Populating the remote DB here for now, since it's quicker to do it via code
-            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
-            Random rand = new Random();
-
             // Giving the user a random romon for the first time
             //foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
             //foundImg.setImageResource(foundRomon.getDrawableResource());
-
         }
         else
         {
@@ -120,8 +132,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 // Ensuring that the we can click the image
                 foundImg.setVisibility(View.VISIBLE);
-                DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
-                Random rand = new Random();
 
                 // TODO: Determine found romon based on latitude & longtitude
                 foundRomon = db.getDexRomon(rand.nextInt(db.getDexCount()));
@@ -143,8 +153,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         // Battle
         if (view == buttons[0]) {
             Log.i(TAG, "Battle button pressed!");
-            Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
-            startActivity(intent);
+            /*Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
+            startActivity(intent);*/
+            Toast.makeText(this, "DB Version: " + dbVersion, Toast.LENGTH_LONG).show();
         }
 
         // Trade
@@ -170,7 +181,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             // Preventing horrible things
             if(foundRomon != null) {
-                DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+                DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(), dbVersion);
                 db.addRomonBank(foundRomon);
 
                 // Preventing adding the same romon multiple times
@@ -181,9 +192,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         if(view == titleText)
         {
-
-            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
-
+            DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(), dbVersion);
             if(!zAdded)
             {
                 // Adding Z-mon to the remote DB
@@ -196,7 +205,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 db.removeRomonDexRemote("Z-mon");
                 zRemoved = true;
             }
-
+            Toast.makeText(this, "Remote version: " + db.getRemoteVersion(), Toast.LENGTH_SHORT).show();
         }
     }
 

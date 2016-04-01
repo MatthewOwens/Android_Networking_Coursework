@@ -44,7 +44,7 @@ public class ListActivity extends Activity implements View.OnClickListener
         Log.i(TAG, "onCreate!");
 
         setContentView(R.layout.list_layout);
-        dbHelper = new DatabaseHelper(this);
+        dbHelper = new DatabaseHelper(this, getSharedPreferences("prefs", 0).getInt("dbVersion", 1));
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);

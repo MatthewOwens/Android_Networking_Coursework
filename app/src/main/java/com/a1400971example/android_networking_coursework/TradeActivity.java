@@ -59,7 +59,8 @@ public class TradeActivity extends Activity implements View.OnClickListener {
         confirmButton.setOnClickListener(this);
 
         // Populating our bank
-        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(),
+                                getSharedPreferences("prefs", 0).getInt("dbVersion", 1));
         bankedRomon = db.getBankRomon();
 
         for(int i = 0; i < bankedRomon.size(); ++i)

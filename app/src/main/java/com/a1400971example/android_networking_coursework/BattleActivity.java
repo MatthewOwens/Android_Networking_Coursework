@@ -55,7 +55,8 @@ public class BattleActivity extends Activity implements View.OnClickListener
         list_confirmButton.setOnClickListener(this);
 
         // Populating the bank
-        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext());
+        DatabaseHelper db = new DatabaseHelper(this.getApplicationContext(),
+                                getSharedPreferences("prefs", 0).getInt("dbVersion", 1));
         bankedRomon = db.getBankRomon();
 
         // Populating the list views
